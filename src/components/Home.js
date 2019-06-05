@@ -13,7 +13,7 @@ class Home extends React.Component {
 
         return (
             <div className="container">
-                <h2>JUST DO WANT YOU WANT</h2>
+                <h2>JUST DO WHAT YOU WANT</h2>
                 <div onClick={this.alert1}>{text}</div>
             </div>
         );

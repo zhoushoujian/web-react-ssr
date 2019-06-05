@@ -40,7 +40,7 @@ function htmlTemplate( reactDom, reduxState ) {
         <head>
             <meta charset="utf-8">
             <title>React SSR</title>
-            <link rel="stylesheet" href="./css/home.css">
+            <link rel="stylesheet" href="./css/bundle.home.css">
         </head>
         
         <body>
@@ -48,7 +48,10 @@ function htmlTemplate( reactDom, reduxState ) {
             <script>
                 window.REDUX_DATA = ${ JSON.stringify( reduxState ) }
             </script>
+            <script src="./js/bundle.js"></script>
             <script src="./js/home.js"></script>
+            <script src="./js/manifest.js"></script>
+            <script src="./js/vendor.js"></script>
         </body>
         </html>
     `;

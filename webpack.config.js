@@ -3,6 +3,8 @@ const path = require( "path" );
 const { BundleAnalyzerPlugin } = require( "webpack-bundle-analyzer" );
 const FriendlyErrorsWebpackPlugin = require( "friendly-errors-webpack-plugin" );
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const plugins = [
     new FriendlyErrorsWebpackPlugin(),
@@ -78,6 +80,40 @@ module.exports = {
             }
         ],
     },
-    plugins
+    plugins,
+    optimization: {
+        minimizer: [
+          new UglifyJsPlugin({ cache: true, parallel: true, sourceMap: false }),
+          new OptimizeCSSAssetsPlugin({})
+        ],
+        splitChunks:{
+          chunks: 'async',
+          minSize: 30000,
+          minChunks: 1,
+          maxAsyncRequests: 5,
+          maxInitialRequests: 3,
+          name: false,
+          cacheGroups: {
+            vendor: {
+              name: 'vendor',
+              chunks: 'initial',
+              priority: -10,
+              reuseExistingChunk: false,
+              test: /node_modules\/(.*)\.js/
+            },
+            styles: {
+              name: 'bundle',
+              test: /\.(less|css)$/,
+              chunks: 'all',
+              minChunks: 1,
+              reuseExistingChunk: true,
+              enforce: true
+            }
+          }
+        },
+        runtimeChunk: {
+          name: 'manifest',
+        }
+    },
 };
 
