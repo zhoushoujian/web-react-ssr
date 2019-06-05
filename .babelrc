@@ -19,5 +19,5 @@
         ],
         ["transform-runtime", "transform-decorators-legacy"],
         "babel-polyfill"
-      ]
+    ]
 }
