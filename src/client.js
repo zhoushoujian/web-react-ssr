@@ -7,6 +7,8 @@ import Home from "./components/Home";
 import createStore from "./store";
 
 const store = createStore( window.REDUX_DATA );
+window.$getState = store.getState;
+window.$dispatch = store.dispatch;
 
 ReactDOM.hydrate( (
     <ReduxProvider store={ store }>

@@ -1,11 +1,19 @@
 import React from "react";
 import { connect } from "react-redux";
 import './home.less'
+import {storeData} from "../store";
 
 class Home extends React.Component {
 
     alert1 = () => {
         alert("this is alert")
+    }
+
+    componentDidMount(){
+        console.log("$getState()", $getState());
+        setTimeout(() => {
+            window.$dispatch(storeData("GO!!!"))
+        },5000)
     }
 
     render( ) {
