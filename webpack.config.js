@@ -2,17 +2,12 @@ const dev = process.env.NODE_ENV !== "production";
 const path = require( "path" );
 const { BundleAnalyzerPlugin } = require( "webpack-bundle-analyzer" );
 const FriendlyErrorsWebpackPlugin = require( "friendly-errors-webpack-plugin" );
-// const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const plugins = [
-    // new ExtractTextPlugin('styles.css', {
-    //     allChunks: true
-    // }),
     new FriendlyErrorsWebpackPlugin(),
     new MiniCssExtractPlugin({
-        filename: dev ? '[name].css' : '[name].[hash].css',
-        chunkFilename: dev ? '[id].css' : '[id].[hash].css',
+        filename: 'app.css'
       })
 ];
 
@@ -28,12 +23,10 @@ module.exports = {
     mode: dev ? "development" : "production",
     context: path.join( __dirname, "src" ),
     devtool: dev ? "cheap-module-eval-source-map" : "cheap-module-source-map",
-    entry: {
-        app: "./client.js",
-    },
+    entry: ["./client.js", "./components/Home.less"],
     output: {
         path: path.resolve( __dirname, "dist" ),
-        filename: "[name].bundle.js",
+        filename: "app.bundle.js",
     },
     resolve: {
         modules: [
@@ -50,7 +43,6 @@ module.exports = {
             },
             {
                 test: /\.css$|\.less$/,
-                // use: ExtractTextPlugin.extract([ 'css-loader', 'postcss-loader', 'less-loader' ])
                 use: [
                     {
                       loader: MiniCssExtractPlugin.loader,
