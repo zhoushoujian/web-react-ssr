@@ -7,7 +7,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const plugins = [
     new FriendlyErrorsWebpackPlugin(),
     new MiniCssExtractPlugin({
-        filename: 'app.css'
+        filename: 'css/home.css'
       })
 ];
 
@@ -23,16 +23,22 @@ module.exports = {
     mode: dev ? "development" : "production",
     context: path.join( __dirname, "src" ),
     devtool: dev ? "cheap-module-eval-source-map" : "cheap-module-source-map",
-    entry: ["./client.js", "./components/Home.less"],
+    entry: {
+        home: ["./client.js", "./components/home.less"]
+    },
     output: {
         path: path.resolve( __dirname, "dist" ),
-        filename: "app.bundle.js",
+        publicPath:'/dist/',
+        filename: "js/[name].js",
     },
     resolve: {
         modules: [
             path.resolve( "./src" ),
             "node_modules",
         ],
+        alias: {
+            components: __dirname + "/src/components"
+        }
     },
     module: {
         rules: [

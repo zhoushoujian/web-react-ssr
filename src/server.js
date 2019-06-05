@@ -8,7 +8,6 @@ import { Provider as ReduxProvider } from "react-redux";
 import Home from "./components/Home";
 import createStore, { initializeSession, storeData } from "./store";
 
-
 const app = express();
 
 app.use( express.static( path.resolve( __dirname, "../dist" ) ) );
@@ -41,7 +40,7 @@ function htmlTemplate( reactDom, reduxState ) {
         <head>
             <meta charset="utf-8">
             <title>React SSR</title>
-            <link rel="stylesheet" href="./app.css">
+            <link rel="stylesheet" href="./css/home.css">
         </head>
         
         <body>
@@ -49,7 +48,7 @@ function htmlTemplate( reactDom, reduxState ) {
             <script>
                 window.REDUX_DATA = ${ JSON.stringify( reduxState ) }
             </script>
-            <script src="./app.bundle.js"></script>
+            <script src="./js/home.js"></script>
         </body>
         </html>
     `;
