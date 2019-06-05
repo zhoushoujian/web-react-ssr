@@ -66,7 +66,7 @@ module.exports = {
                 use: [{
                     loader: 'url-loader',
                     options: {
-                        name:'fonts/[name].[hash:8].[ext]',
+                        name:'fonts/[name].[ext]',
                         limit: 102400
                     }
                 }]
