@@ -17,7 +17,7 @@ app.get( "/", ( req, res ) => {
     const store = createStore( );
 
     store.dispatch( initializeSession() );
-    store.dispatch( storeData("GO!"));  //comment this to use client data
+    store.dispatch( storeData("ready?"));  //comment this to use client data
     const reduxState = store.getState();
     res.writeHead( 200, { "Content-Type": "text/html" } );
     res.write(`

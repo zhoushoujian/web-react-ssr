@@ -10,8 +10,8 @@ const store = createStore( window.REDUX_DATA );
 window.$getState = store.getState;
 window.$dispatch = store.dispatch;
 
-ReactDOM.hydrate( (
-    <ReduxProvider store={ store }>
+ReactDOM.hydrate(
+    (<ReduxProvider store={ store }>
         <Router>
             <Home />
         </Router>

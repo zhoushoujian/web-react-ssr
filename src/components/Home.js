@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
-import './home.less'
-import {storeData} from "../store";
+import "./home.less";
+import { storeData } from "../store";
 
 class Home extends React.Component {
 
