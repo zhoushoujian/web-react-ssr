@@ -1,0 +1,192 @@
+import React from 'react';
+import { connect } from "react-redux";
+import { confirm, alert, calcSize } from "../utils";
+import { updateFileList, updateText } from "../store";
+import { networkErr } from "../utils";
+import axios from "axios";
+
+String.prototype.format = function() {
+	var str = this.toString();
+	if (!arguments.length)
+			return str;
+	var args = typeof arguments[0];
+	args = (("string" == args || "number" == args) ? arguments : arguments[0]);
+	for (var arg in args) {
+			var replace = args[arg] != null ? args[arg] : '';
+			str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), replace);
+	}
+	return str;
+};
+
+function uploadProgress (evt) {
+    if (evt.lengthComputable) {
+        var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+        document.getElementById('progress').innerHTML = percentComplete.toString() + '%';
+    } else {
+        document.getElementById('progress').innerHTML = 'unable to compute';
+    }
+}
+
+function uploadFailed(evt) {
+    alert("上传失败");
+    console.error("上传失败", evt);
+}
+
+class FileServer extends React.Component {
+
+    constructor(props){
+        super(props);
+    }
+
+    componentDidMount(){
+        if(/Android/i.test(navigator.userAgent)){
+            $('.file-server .android-tip').css("display", "block");
+        }
+    }
+
+    uploadFiles = () => {
+        window.$dispatch(updateText("789"))
+        this.updateFileList = updateFileList;
+        let filename, fileSize, self=this;
+        let files = document.getElementById('fileToUpload').files;
+        let fileNum = document.getElementById('fileToUpload').files.length;
+        let i = 0
+        if (fileNum) {
+            function submit() {
+                filename = document.getElementById('fileToUpload').files[i].name;
+                fileSize = document.getElementById('fileToUpload').files[i].size;
+                /* if (!/\.exe$|\.apk$/gi.test(filename)) {
+                    alert("不允许上传后缀名除exe|apk以外的文件");
+                    return
+                } else  */
+                if (/#|%/g.test(filename)) {
+                    alert("文件名不能包含%或#");
+                    return
+                } else if (fileSize > 1024 * 1024 * 1024) {
+                    alert('文件大小超过1GB');
+                    return
+                }
+                document.getElementById('btnSubmit').value = "上传中";
+                var formData = new FormData();　　　　　　　　　　
+                formData.append('files', files[i]);
+                var xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener("progress", uploadProgress, false);
+                xhr.addEventListener("error", uploadFailed, false);
+                xhr.open('POST', "http://localhost:9527/Images");
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        console.info('上传成功' + xhr.responseText);
+                        /* if (xhr.responseText === "非法类型的文件") {
+                            alert('非法类型的文件');
+                        } else  */
+                        if (xhr.responseText === "illegal_filename") {
+                            alert('非法的文件名');
+                        } else if (xhr.responseText === "more_than_1gb") {
+                            alert('文件大小超过1GB');
+                        } else {
+                            let { fileList } = window.$getState().fileServer;
+                            fileList.push([filename, fileSize]);
+                            fileList = fileList.sort();
+                            // window.$dispatch(self.updateFileList(fileList))
+                            window.location.reload()
+                            alert('上传成功！');
+                            document.getElementById('btnSubmit').value = "上传";
+                            document.getElementById('progress').innerHTML = '';
+                            i++
+                            if (i >= fileNum) {
+                                return;
+                            }
+                            submit();
+                        }
+                    }
+                };
+                xhr.send(formData);
+            }
+            submit()
+        }
+    }
+
+    render() {
+        let { fileList, text } = this.props;
+        return (
+            <div className="file-server">
+                <h2 className='head'> 文件列表 </h2>
+                <div className="upload-area">
+                    <input type="file" id="fileToUpload" style={{"backgroundImage": "none"}} multiple />
+                    <div className="upload">
+                        <input type="button" name="submit" id="btnSubmit" value="上传" onClick={this.uploadFiles} />
+                        <div id='progress'></div>
+                    </div>
+                </div>
+                <div className="warning">可以上传任意文件,但单文件大小不得超过1GB! {text}</div>
+                <div className="android-tip">文件存放:/storage/emulated/0/miXingFeng/downloads</div>
+                <div id="container">
+                    {fileList.length 
+                        ? fileList.map((item, index) => <Child fileInfo={item} key={index} />)
+                        : null}
+                </div>
+            </div>
+        );
+    }
+}
+
+class Child extends React.Component{
+
+    downloadFile = (filename) => {
+        let downloadFileUrl = 'http://localhost:9527/src/Images/{filename}'.format({filename});
+        window.location.href = downloadFileUrl;
+    }
+
+    deleteFile = (filename) => {
+        let { fileList } = window.$getState().fileServer;
+        let list = [], self=this;
+        this.updateFileList = updateFileList;
+        this.networkErr = networkErr;
+        for(let i=0; i<fileList.length; i++){
+            list.push(fileList[i][0])
+        }
+        confirm("提示", "确定要删除吗?", "确定", function(){
+            axios.delete('http://localhost:9527/delete_file/{filename}'.format({filename}))
+                .then(response => {
+                    fileList.splice(list.indexOf(filename), 1);
+                    // window.$dispatch(self.updateFileList(fileList))
+                    window.location.reload()
+                    if (response.data.result === 'removed') {
+                        alert("文件已删除!");
+                        return;
+                    } else if (response.data.result === 'success'){
+                        alert("删除成功!");
+                    } else {
+                        alert("删除失败!");
+                    }
+                })
+                .catch(error => {
+                    console.error("删除文件过程中发生了错误", error.stack||error.toString());
+                    self.networkErr(error);
+                })
+        })
+    }
+
+    render(){
+        let { fileInfo } = this.props;
+        return (
+            <div className="file-item">
+                <span title={fileInfo[0]} onClick={() => this.downloadFile(fileInfo[0])} className="file-link">{fileInfo[0]}</span>
+                <span className="file-size">{calcSize(fileInfo[1])}</span>
+                <span className="delete-file" onClick={() => this.deleteFile(fileInfo[0])}>删除</span>
+            </div>
+        )
+    }
+}
+
+
+const mapStateToProps = state => {
+    return {
+        fileList: state.fileServer.fileList,
+        text: state.fileServer.text
+    };
+};
+
+const mapDispatchToProps = () => ({});
+
+export default connect(mapStateToProps, mapDispatchToProps)(FileServer);

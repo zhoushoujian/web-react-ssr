@@ -1,50 +1,45 @@
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import thunkMiddleware from "redux-thunk";
 
+//actionType
+const FILE_LIST = "fileServer/fileList";
+const TEXT = "fileServer/text";
+
 // initialSate
 const initialState = () => ({
-    initialSession: false,
-    textWord: "123"
+  fileList: [],
+  text: "123"
 });
 
 //reducer
-const sessionReducer = ( state = initialState(), action ) => {
-    switch ( action.type ) {
-        case "INITIALIZE_SESSION":
-            return Object.assign({}, state, { initialSession: action.data });
-        default: 
-            return state;
-    }
-};
-const dataReducer = ( state = initialState(), action ) => {
-    switch ( action.type ) {
-        case "STORE_DATA":
-            return Object.assign({}, state, { textWord: action.data });
-        default: 
-            return state;
-    }
-};
+const dataReducer = function (state = initialState(), action = {}) {
+  switch (action.type) {
+    case FILE_LIST:
+      return Object.assign({}, state, { fileList: action.data });
+    case TEXT:
+      return Object.assign({}, state, { text: action.data });
+    default:
+      return state;
+  }
+}
 
 //action
-export const initializeSession = ( data ) => ( {
-    type: "INITIALIZE_SESSION",
-    data
-} );
-export const storeData = ( data ) => ( {
-    type: "STORE_DATA",
-    data,
+export const updateFileList = data => ({
+  type: FILE_LIST,
+  data
 });
 
+export const updateText = data => ({
+  type: TEXT,
+  data
+});
 
 // combineReducers
 let reducersMap = {
-    session: {
-        sessionReducer
-    },
-    data: {
-        dataReducer
-    }
-  };
+    fileServer: {
+          dataReducer
+      }
+    };
 
 const reducer = combineReducers({
     ...Object.keys(reducersMap).reduce(
@@ -67,4 +62,4 @@ const reducer = combineReducers({
     )
   });
 
-export default ( initialState ) => createStore( reducer, initialState, applyMiddleware( thunkMiddleware ) );
+export const createDuxStore = ( initialState ) => createStore( reducer, initialState, applyMiddleware( thunkMiddleware ) );

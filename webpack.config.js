@@ -1,15 +1,15 @@
 const dev = process.env.NODE_ENV !== "production";
 const path = require( "path" );
 const { BundleAnalyzerPlugin } = require( "webpack-bundle-analyzer" );
-const FriendlyErrorsWebpackPlugin = require( "friendly-errors-webpack-plugin" );
+// const FriendlyErrorsWebpackPlugin = require( "friendly-errors-webpack-plugin" );
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const plugins = [
-    new FriendlyErrorsWebpackPlugin(),
+    // new FriendlyErrorsWebpackPlugin(),
     new MiniCssExtractPlugin({
-        filename: 'css/home.css'
+        filename: 'css/fileServer.css'
       })
 ];
 
@@ -26,7 +26,7 @@ module.exports = {
     context: path.join( __dirname, "src" ),
     devtool: dev ? "cheap-module-eval-source-map" : "cheap-module-source-map",
     entry: {
-        home: ["./client.js", "./components/home.less"]
+      fileServer: ["./client.js", "./components/fileServer.less"]
     },
     output: {
         path: path.resolve( __dirname, "dist" ),
@@ -47,7 +47,35 @@ module.exports = {
             {
                 test: /\.jsx?$/,
                 exclude: /(node_modules|bower_components)/,
-                loader: "babel-loader",
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        "presets": [
+                            ["env",
+                                {
+                                    "modules": false,
+                                    "useBuiltIns": "usage"
+                                }
+                            ],
+                            "react",
+                            "stage-2",
+                        ],
+                        "plugins": [
+                            [
+                                "babel-plugin-transform-require-ignore",
+                                {
+                                    "extensions": [".less"]
+                                }
+                            ],
+                            ["transform-runtime", "transform-decorators-legacy"],
+                            "babel-polyfill",
+                            ["import", {
+                                "libraryName": "antd-mobile",
+                                "style": "css"
+                            }]
+                        ]
+                    }
+                }
             },
             {
                 test: /\.css$|\.less$/,

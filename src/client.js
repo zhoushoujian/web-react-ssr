@@ -1,19 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter as Router } from "react-router-dom";
-import { Provider as ReduxProvider } from "react-redux";
+import { Provider } from "react-redux";
+import $ from "jquery";
+import App from "./components/fileServer";
+import { createDuxStore } from "./store";
 
-import Home from "./components/Home";
-import createStore from "./store";
-
-const store = createStore( window.REDUX_DATA );
+const store = createDuxStore( window.REDUX_DATA );
 window.$getState = store.getState;
 window.$dispatch = store.dispatch;
+window.$ = $;
 
 ReactDOM.hydrate(
-    (<ReduxProvider store={ store }>
+    (<Provider store={ store }>
         <Router>
-            <Home />
+            <App />
         </Router>
-    </ReduxProvider>
+    </Provider>
 ), document.getElementById( "app" ) );

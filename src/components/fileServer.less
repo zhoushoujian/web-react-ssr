@@ -1,0 +1,73 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+.file-server{
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 55px);
+    flex-direction: column;
+    .head{
+        text-align: center;
+        background-color: #81AFED;
+        padding-bottom: 20px;
+        padding-top: 20px;
+        width: 100%;
+        color: #fff;
+        font-size: 18px;
+        font-weight: normal;
+        line-height: 24px;
+        height: 24px;
+    }
+    .upload-area{
+        display: flex;
+        justify-content: space-between;
+        padding: 20px 30px 20px 20px;
+        .upload{
+            display: flex;
+            width: 90px;
+            justify-content: space-between;
+            align-items: center;
+        }
+    }
+    .warning{
+        padding-left: 20px;
+    }
+    .android-tip{
+        display:none;
+        padding-left: 20px;
+        padding-top: 10px;
+        color: #bababa;
+    }
+    #container{
+        display: block;
+        margin-left: 20px;
+        margin-top: 20px;
+        overflow-y: auto;
+        .file-item{
+            margin: 5px 0;
+            word-break: break-all;
+        }
+        .file-link {
+            color: rgba(0, 0, 255, 1);;
+            font-size: 20px;
+            margin-top: 10px;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .file-size{
+            color: #878787;
+            padding: 0 5px;
+        }
+        .delete-file {
+            color: #f00;
+            text-decoration: underline;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        .file-download-status{
+            color: green;
+            margin-left: 5px;
+        }
+    }
+}
