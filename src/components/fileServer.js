@@ -4,6 +4,7 @@ import { confirm, alert, calcSize } from "../utils";
 import { updateFileList, updateText } from "../store";
 import { networkErr } from "../utils";
 import axios from "axios";
+import { URL } from "./constant";
 
 String.prototype.format = function() {
 	var str = this.toString();
@@ -45,9 +46,19 @@ class FileServer extends React.Component {
     }
 
     uploadFiles = () => {
-        window.$dispatch(updateText("789"))
-        this.updateFileList = updateFileList;
-        let filename, fileSize, self=this;
+        setTimeout(() => {
+            window.$dispatch(updateText(Math.random()))
+        }, 1000)
+        let self = this;
+        self.updateFileList = updateFileList;
+        let uploadFlag = false, fileList;
+        let uploadTimer = setInterval(() => {
+            if(uploadFlag){
+                clearInterval(uploadTimer)
+                $dispatch(self.updateFileList(fileList))
+            }
+        }, 50)
+        let filename, fileSize;
         let files = document.getElementById('fileToUpload').files;
         let fileNum = document.getElementById('fileToUpload').files.length;
         let i = 0
@@ -72,7 +83,7 @@ class FileServer extends React.Component {
                 var xhr = new XMLHttpRequest();
                 xhr.upload.addEventListener("progress", uploadProgress, false);
                 xhr.addEventListener("error", uploadFailed, false);
-                xhr.open('POST', "http://localhost:9527/Images");
+                xhr.open('POST', URL.upload);
                 xhr.onreadystatechange = () => {
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         console.info('上传成功' + xhr.responseText);
@@ -84,16 +95,16 @@ class FileServer extends React.Component {
                         } else if (xhr.responseText === "more_than_1gb") {
                             alert('文件大小超过1GB');
                         } else {
-                            let { fileList } = window.$getState().fileServer;
+                            fileList = window.$getState().fileServer.fileList;
                             fileList.push([filename, fileSize]);
                             fileList = fileList.sort();
-                            // window.$dispatch(self.updateFileList(fileList))
-                            window.location.reload()
-                            alert('上传成功！');
+                            // alert('上传成功！');
                             document.getElementById('btnSubmit').value = "上传";
                             document.getElementById('progress').innerHTML = '';
+                            uploadFlag = true;
                             i++
                             if (i >= fileNum) {
+                                // window.location.reload()
                                 return;
                             }
                             submit();
@@ -133,7 +144,7 @@ class FileServer extends React.Component {
 class Child extends React.Component{
 
     downloadFile = (filename) => {
-        let downloadFileUrl = 'http://localhost:9527/src/Images/{filename}'.format({filename});
+        let downloadFileUrl = URL.download.format({filename});
         window.location.href = downloadFileUrl;
     }
 
@@ -146,11 +157,9 @@ class Child extends React.Component{
             list.push(fileList[i][0])
         }
         confirm("提示", "确定要删除吗?", "确定", function(){
-            axios.delete('http://localhost:9527/delete_file/{filename}'.format({filename}))
+            axios.delete(URL.delete.format({filename}))
                 .then(response => {
                     fileList.splice(list.indexOf(filename), 1);
-                    // window.$dispatch(self.updateFileList(fileList))
-                    window.location.reload()
                     if (response.data.result === 'removed') {
                         alert("文件已删除!");
                         return;
@@ -159,6 +168,8 @@ class Child extends React.Component{
                     } else {
                         alert("删除失败!");
                     }
+                    // window.$dispatch(self.updateFileList(fileList))
+                    window.location.reload()
                 })
                 .catch(error => {
                     console.error("删除文件过程中发生了错误", error.stack||error.toString());
