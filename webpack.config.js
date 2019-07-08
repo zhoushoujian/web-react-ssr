@@ -143,5 +143,9 @@ module.exports = {
           name: 'manifest',
         }
     },
+    devServer: { 
+        host:"localhost",
+        port: 9527 
+    },
 };
 

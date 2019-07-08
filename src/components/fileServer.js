@@ -46,19 +46,7 @@ class FileServer extends React.Component {
     }
 
     uploadFiles = () => {
-        setTimeout(() => {
-            window.$dispatch(updateText(Math.random()))
-        }, 1000)
-        let self = this;
-        self.updateFileList = updateFileList;
-        let uploadFlag = false, fileList;
-        let uploadTimer = setInterval(() => {
-            if(uploadFlag){
-                clearInterval(uploadTimer)
-                $dispatch(self.updateFileList(fileList))
-            }
-        }, 50)
-        let filename, fileSize;
+        let filename, fileSize, fileList;
         let files = document.getElementById('fileToUpload').files;
         let fileNum = document.getElementById('fileToUpload').files.length;
         let i = 0
@@ -98,13 +86,13 @@ class FileServer extends React.Component {
                             fileList = window.$getState().fileServer.fileList;
                             fileList.push([filename, fileSize]);
                             fileList = fileList.sort();
-                            // alert('上传成功！');
+                            alert('上传成功！');
                             document.getElementById('btnSubmit').value = "上传";
                             document.getElementById('progress').innerHTML = '';
-                            uploadFlag = true;
+                            window.$dispatch(updateText(Math.random()))
+                            window.$dispatch(updateFileList(fileList))
                             i++
                             if (i >= fileNum) {
-                                // window.location.reload()
                                 return;
                             }
                             submit();
@@ -129,13 +117,14 @@ class FileServer extends React.Component {
                         <div id='progress'></div>
                     </div>
                 </div>
-                <div className="warning">可以上传任意文件,但单文件大小不得超过1GB! {text}</div>
+                <div className="warning">可以上传任意文件,但单文件大小不得超过1GB! </div>
                 <div className="android-tip">文件存放:/storage/emulated/0/miXingFeng/downloads</div>
                 <div id="container">
                     {fileList.length 
                         ? fileList.map((item, index) => <Child fileInfo={item} key={index} />)
                         : null}
                 </div>
+                <div style={{"display": "none"}}>{text}</div>
             </div>
         );
     }
@@ -168,8 +157,8 @@ class Child extends React.Component{
                     } else {
                         alert("删除失败!");
                     }
-                    // window.$dispatch(self.updateFileList(fileList))
-                    window.location.reload()
+                    window.$dispatch(updateText(Math.random()))
+                    window.$dispatch(updateFileList(fileList))
                 })
                 .catch(error => {
                     console.error("删除文件过程中发生了错误", error.stack||error.toString());
