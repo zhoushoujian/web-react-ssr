@@ -5,6 +5,8 @@ import util from "util"
 import url from "url"
 import formidable from "formidable"
 import Render from "./static/render"
+import chokidar from "chokidar"
+import { exec } from "child_process"
 
 import React from "react";
 import { renderToNodeStream } from "react-dom/server";
@@ -76,7 +78,7 @@ app.get( "/", ( req, res ) => {
 } );
 
 app.post("/Images", uploadFiles);
-// app.get("/get_list", getFilesList);
+app.get("/get_list", getFilesList);
 app.delete(/\/delete_file\/(.+)/, deleteFiles);
 app.get(/\/(Images)\/(.+)/, fileDownload);
 
@@ -153,25 +155,25 @@ function uploadFiles(req, res){
     }
 }
 
-// function getFilesList(req, res){
-//     try {
-//         let finalList = [];
-//         let content = fs.readdirSync(path.join(__dirname, "Images"));
-//         for(let i=0; i<content.length; i++){
-//             let singleList = [],
-//                 filePath = path.join(__dirname + "/Images/" + content[i]);
-//             singleList.push(content[i]);
-//             let stats = fs.statSync(filePath);
-//             singleList.push(stats.size);
-//             finalList.push(singleList);
-//         };
-//         console.debug(` server  反馈给ajax的请求`, finalList.length);
-//         return writeResponse(res, finalList);
-//     } catch (err) {
-//         console.error("getFilesList error", err.stack || err.toString());
-//         return reportError(req, res, err);
-//     }
-// }
+function getFilesList(req, res){
+    try {
+        let finalList = [];
+        let content = fs.readdirSync(path.join(__dirname, "Images"));
+        for(let i=0; i<content.length; i++){
+            let singleList = [],
+                filePath = path.join(__dirname + "/Images/" + content[i]);
+            singleList.push(content[i]);
+            let stats = fs.statSync(filePath);
+            singleList.push(stats.size);
+            finalList.push(singleList);
+        };
+        console.debug(` server  反馈给ajax的请求`, finalList.length);
+        return writeResponse(res, finalList);
+    } catch (err) {
+        console.error("getFilesList error", err.stack || err.toString());
+        return reportError(req, res, err);
+    }
+}
 
 function deleteFiles(req, res){
     try{
@@ -261,4 +263,49 @@ function reportError(req, res, userErr) {
         res.status(500).end();
         console.error("reportError e", e.stack || e.toString())
     }
+}
+
+//hot update
+{
+    let dst_path = path.join(__dirname, "./components"),
+        workTimer;
+    const watcher = chokidar.watch(dst_path, {
+        ignored: /(^|[\/\\])\..|node_modules/,
+        persistent: true
+    });
+    watcher.on('ready', () => console.debug('Initial scan complete. Ready for changes'));
+    console.debug("begin to monitor")
+    watcher
+        .on('error', error => console.error(`Watcher error`, error))
+        .on('all', (event, path) => {
+            console.warn("监听到了文件变化")
+            if (workTimer) {
+                clearTimeout(workTimer);
+            }
+            workTimer = setTimeout(function () {
+                clearTimeout(workTimer);
+                console.warn("开始执行构建")
+                console.log(__dirname)
+                // process.chdir(require('path').resolve(__dirname.slice(0,-3)));
+                console.log(require('path').resolve(__dirname.slice(0,-3)))
+                let child1 = exec("yarn build");
+                child1.stdout.on('data', function (data) {
+                    console.debug('子进程', data.toString());
+                });
+                child1.stderr.on('data', function (data) {
+                    console.warn("stderr", data);
+                });
+                child1.on('exit', function (code) {
+                    console.debug('子进程1已退出，代码：' + code);
+                })
+            }, 3000)
+        })
+    //捕获异常
+    process.on('uncaughtException', function (err) {
+        if (err == "Error: kill ESRCH") {
+            console.error("Error: kill ESRCH 子进程已退出");
+        } else {
+            console.warn('Caught exception: ' + err);
+        }
+    });
 }

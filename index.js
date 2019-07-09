@@ -1,13 +1,7 @@
 require( "babel-register" )( {
     "presets": [
-        [ "env",
-            {
-                "modules": false,
-                "useBuiltIns": "usage"
-            }
-        ],
+        [ "env" ],
         "react",
-        "es2015", 
         "stage-2",
     ],
     'plugins': [
