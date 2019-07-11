@@ -4,35 +4,44 @@ import thunkMiddleware from "redux-thunk";
 //actionType
 const FILE_LIST = "fileServer/fileList";
 const TEXT = "fileServer/text";
+const IS_FROM_SERVE_RENDER = "isFromServeRender";
 
 // initialSate
 const initialState = () => ({
   fileList: [],
-  text: "123"
+  text: "123",
+  isFromServeRender: false
 });
 
 //reducer
 const dataReducer = function (state = initialState(), action = {}) {
-  switch (action.type) {
-    case FILE_LIST:
-      return Object.assign({}, state, { fileList: action.data });
-    case TEXT:
-      return Object.assign({}, state, { text: action.data });
-    default:
-      return state;
-  }
+  	switch (action.type) {
+		case FILE_LIST:
+		  	return Object.assign({}, state, { fileList: action.data });
+		case TEXT:
+		  	return Object.assign({}, state, { text: action.data });
+		case IS_FROM_SERVE_RENDER:
+			return Object.assign({}, state, {isFromServeRender: action.data})
+		default:
+		  	return state;
+  	}
 }
 
 //action
 export const updateFileList = data => ({
-  type: FILE_LIST,
-  data
+  	type: FILE_LIST,
+  	data
 });
 
 export const updateText = data => ({
-  type: TEXT,
-  data
+  	type: TEXT,
+  	data
 });
+
+export const updateIsFromServeRender = data => ({
+	type: IS_FROM_SERVE_RENDER,
+	data
+  });
 
 // combineReducers
 let reducersMap = {

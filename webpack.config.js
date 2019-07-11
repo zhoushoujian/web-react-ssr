@@ -10,7 +10,7 @@ const plugins = [
     // new FriendlyErrorsWebpackPlugin(),
     new MiniCssExtractPlugin({
         filename: 'css/fileServer.css'
-      })
+    })
 ];
 
 if ( !dev ) {
@@ -24,7 +24,7 @@ if ( !dev ) {
 module.exports = {
     mode: dev ? "development" : "production",
     context: path.join( __dirname, "src" ),
-    devtool: dev ? "cheap-module-eval-source-map" : "cheap-module-source-map",
+    devtool: dev ? "source-map" : "cheap-module-source-map",
     entry: {
       fileServer: ["./client.js", "./components/fileServer.less"]
     },
@@ -102,7 +102,7 @@ module.exports = {
                 }]
             },
             {
-                test: /\.(svg)$/i, 
+                test: /\.(svg)$/i,
                 loader: ['file-loader'],
                 include: []
             }
@@ -143,9 +143,10 @@ module.exports = {
           name: 'manifest',
         }
     },
-    devServer: { 
+    devServer: {
         host:"localhost",
-        port: 9527 
+        port: 9527,
+        contentBase: path.join(__dirname, 'public')
     },
 };
 

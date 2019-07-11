@@ -13,7 +13,7 @@ import { renderToNodeStream } from "react-dom/server";
 import { StaticRouter } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import App from "./components/fileServer";
-import { updateFileList, updateText, createDuxStore } from "./store";
+import { updateFileList, updateText, updateIsFromServeRender, createDuxStore } from "./store";
 
 const app = express();
 app.use( express.static( path.resolve( __dirname, "../dist" ) ) );
@@ -36,8 +36,9 @@ app.get( "/", ( req, res ) => {
         finalList.push(singleList);
     };
     const store = createDuxStore( );
-    store.dispatch(updateText("456"))
-    store.dispatch( updateFileList(finalList));
+	store.dispatch(updateText("456"))
+	store.dispatch(updateIsFromServeRender(true))
+    store.dispatch(updateFileList(finalList));
     const reduxState = store.getState();
     res.writeHead( 200, { "Content-Type": "text/html" } );
     res.write(`
@@ -45,11 +46,11 @@ app.get( "/", ( req, res ) => {
         <html>
         <head>
             <meta charset="utf-8">
-            <title>React SSR</title>
+            <title>欢迎使用文件服务器</title>
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+            <link rel="shortcut icon" href="./favicon.ico">
             <link rel="stylesheet" href="./css/bundle.fileServer.css">
         </head>
-        
         <body>
             <div id="app">`
     )
@@ -293,7 +294,7 @@ function reportError(req, res, userErr) {
                     console.debug('子进程', data.toString());
                 });
                 child1.stderr.on('data', function (data) {
-                    console.warn("stderr", data);
+                    // console.warn("stderr", data);
                 });
                 child1.on('exit', function (code) {
                     console.debug('子进程1已退出，代码：' + code);

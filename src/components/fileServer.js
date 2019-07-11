@@ -42,7 +42,15 @@ class FileServer extends React.Component {
     componentDidMount(){
         if(/Android/i.test(navigator.userAgent)){
             $('.file-server .android-tip').css("display", "block");
-        }
+		}
+		if(!this.props.isFromServeRender){
+			axios.get(URL.getList)
+            	.then(function(response) {
+            	    let array = response.data.result;
+            	    if (!array.length) return;
+            	    window.$dispatch(updateFileList(array));
+            })
+		}
     }
 
     uploadFiles = () => {
@@ -120,7 +128,7 @@ class FileServer extends React.Component {
                 <div className="warning">可以上传任意文件,但单文件大小不得超过1GB! </div>
                 <div className="android-tip">文件存放:/storage/emulated/0/miXingFeng/downloads</div>
                 <div id="container">
-                    {fileList.length 
+                    {fileList.length
                         ? fileList.map((item, index) => <Child fileInfo={item} key={index} />)
                         : null}
                 </div>
@@ -183,7 +191,8 @@ class Child extends React.Component{
 const mapStateToProps = state => {
     return {
         fileList: state.fileServer.fileList,
-        text: state.fileServer.text
+		text: state.fileServer.text,
+		isFromServeRender: state.fileServer.isFromServeRender
     };
 };
 
