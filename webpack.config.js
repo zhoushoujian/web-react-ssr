@@ -1,13 +1,11 @@
 const dev = process.env.NODE_ENV !== "production";
 const path = require( "path" );
 const { BundleAnalyzerPlugin } = require( "webpack-bundle-analyzer" );
-// const FriendlyErrorsWebpackPlugin = require( "friendly-errors-webpack-plugin" );
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const plugins = [
-    // new FriendlyErrorsWebpackPlugin(),
     new MiniCssExtractPlugin({
         filename: 'css/fileServer.css'
     })

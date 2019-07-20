@@ -15,6 +15,12 @@ import { Provider as ReduxProvider } from "react-redux";
 import App from "./components/fileServer";
 import { updateFileList, updateText, updateIsFromServeRender, createDuxStore } from "./store";
 
+//config
+const config = {
+	useHotBuild: false,
+	NODE_ENV_PRODUCTION: true
+}
+
 const app = express();
 app.use( express.static( path.resolve( __dirname, "../dist" ) ) );
 
@@ -46,10 +52,12 @@ app.get( "/", ( req, res ) => {
         <html>
         <head>
             <meta charset="utf-8">
-            <title>欢迎使用文件服务器</title>
+			<title>${'欢迎使用文件服务器'}</title>
+			<meta name="description" content=${'description'} />
+    		<meta name="keywords" content=${'keywords'} />
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-            <link rel="shortcut icon" href="./favicon.ico">
-            <link rel="stylesheet" href="./css/bundle.fileServer.css">
+			<link rel="shortcut icon" href="./favicon.ico">
+			${config.NODE_ENV_PRODUCTION ? "<link rel='stylesheet' href='./css/0.fileServer.css'>" : "<link rel='stylesheet' href='./css/bundle.fileServer.css'>"}
         </head>
         <body>
             <div id="app">`
@@ -63,14 +71,13 @@ app.get( "/", ( req, res ) => {
     );
     reactDom.pipe(res, { end: false });
     reactDom.on('end', () => {
-        res.write(`</div>
+		res.write(`</div>
                 <script>
                     window.REDUX_DATA = ${ JSON.stringify( reduxState ) }
                 </script>
                 <script src="./js/bundle.js"></script>
                 <script src="./js/fileServer.js"></script>
                 <script src="./js/manifest.js"></script>
-                <script src="./js/vendor.js"></script>
             </body>
             </html>
         `);
@@ -93,10 +100,10 @@ function uploadFiles(req, res){
         form.on('file', function(filed, file) {
             files.push([filed, file]);
         }).parse(req, function(err, fields, files) {
-        // console.debug("fields", fields);
-        // console.debug("files", files);
+        // console.info("fields", fields);
+        // console.info("files", files);
         if (err) {
-            console.debug(`uploadFiles formidable err` + err.message);
+            console.info(`uploadFiles formidable err` + err.message);
             return reportError(req, res, err);
         }
         let filesArray = files.files;
@@ -117,7 +124,7 @@ function uploadFiles(req, res){
                 'content-type': 'application/octet-stream'
             });
             res.write('received upload:\n\n');
-            //console.debug("files", files.files.path);
+            //console.info("files", files.files.path);
             let readStream = fs.createReadStream(files.files.path);
             let writeStream = fs.createWriteStream(path.join(__dirname, "Images/" + filesName));
             readStream.pipe(writeStream);
@@ -125,9 +132,9 @@ function uploadFiles(req, res){
                 fs.unlinkSync(files.files.path);
             });
         } else {
-            console.debug(`  上传的是多文件`);
+            console.info(`  上传的是多文件`);
             for (let i = 0; i < filesNum; i++) {
-                console.debug(`  上传的文件名`, filesArray[i].name);
+                console.info(`  上传的文件名`, filesArray[i].name);
                 /* if (!/\.exe$|\.apk$/gim.test(filesArray[i].name)) {
                     return res.end("非法类型的文件");
                 } else  */
@@ -168,7 +175,7 @@ function getFilesList(req, res){
             singleList.push(stats.size);
             finalList.push(singleList);
         };
-        console.debug(` server  反馈给ajax的请求`, finalList.length);
+        console.info(` server  反馈给ajax的请求`, finalList.length);
         return writeResponse(res, finalList);
     } catch (err) {
         console.error("getFilesList error", err.stack || err.toString());
@@ -181,7 +188,7 @@ function deleteFiles(req, res){
         let pathname = url.parse(req.url).pathname;
         console.log("pathname", pathname)
         let filename = decodeURIComponent(pathname).split("/")[decodeURIComponent(pathname).split("/").length - 1];
-        console.debug(` server delete filename`, filename);
+        console.info(` server delete filename`, filename);
         if (fs.existsSync(path.join(__dirname, `./Images/${filename}`))) {
             fs.unlink(path.join(__dirname, `./Images/${filename}`), function(err) {
                 if (err) throw err;
@@ -266,47 +273,49 @@ function reportError(req, res, userErr) {
     }
 }
 
-//hot update
+//hot build
 {
-    let dst_path = path.join(__dirname, "./components"),
-        workTimer;
-    const watcher = chokidar.watch(dst_path, {
-        ignored: /(^|[\/\\])\..|node_modules/,
-        persistent: true
-    });
-    watcher.on('ready', () => console.debug('Initial scan complete. Ready for changes'));
-    console.debug("begin to monitor")
-    watcher
-        .on('error', error => console.error(`Watcher error`, error))
-        .on('all', (event, path) => {
-            console.warn("监听到了文件变化")
-            if (workTimer) {
-                clearTimeout(workTimer);
-            }
-            workTimer = setTimeout(function () {
-                clearTimeout(workTimer);
-                console.warn("开始执行构建")
-                console.log(__dirname)
-                // process.chdir(require('path').resolve(__dirname.slice(0,-3)));
-                console.log(require('path').resolve(__dirname.slice(0,-3)))
-                let child1 = exec("yarn build");
-                child1.stdout.on('data', function (data) {
-                    console.debug('子进程', data.toString());
-                });
-                child1.stderr.on('data', function (data) {
-                    // console.warn("stderr", data);
-                });
-                child1.on('exit', function (code) {
-                    console.debug('子进程1已退出，代码：' + code);
-                })
-            }, 3000)
-        })
-    //捕获异常
-    process.on('uncaughtException', function (err) {
-        if (err == "Error: kill ESRCH") {
-            console.error("Error: kill ESRCH 子进程已退出");
-        } else {
-            console.warn('Caught exception: ' + err);
-        }
-    });
+	if (config.useHotBuild) {
+		let dst_path = path.join(__dirname, "./components"),
+			workTimer;
+		const watcher = chokidar.watch(dst_path, {
+			ignored: /(^|[\/\\])\..|node_modules/,
+			persistent: true
+		});
+		watcher.on('ready', () => console.info('Initial scan complete. Ready for changes'));
+		console.info("begin to monitor")
+		watcher
+			.on('error', error => console.error(`Watcher error`, error))
+			.on('all', (event, path) => {
+				console.warn("监听到了文件变化")
+				if (workTimer) {
+					clearTimeout(workTimer);
+				}
+				workTimer = setTimeout(function () {
+					clearTimeout(workTimer);
+					console.warn("开始执行构建")
+					console.log(__dirname)
+					// process.chdir(require('path').resolve(__dirname.slice(0,-3)));
+					console.log(require('path').resolve(__dirname.slice(0, -3)))
+					let child1 = exec("yarn dev");
+					child1.stdout.on('data', function (data) {
+						console.info('子进程', data.toString());
+					});
+					child1.stderr.on('data', function (data) {
+						// console.warn("stderr", data);
+					});
+					child1.on('exit', function (code) {
+						console.info('子进程1已退出，代码：' + code);
+					})
+				}, 3000)
+			})
+		//捕获异常
+		process.on('uncaughtException', function (err) {
+			if (err == "Error: kill ESRCH") {
+				console.error("Error: kill ESRCH 子进程已退出");
+			} else {
+				console.warn('Caught exception: ' + err);
+			}
+		});
+	}
 }

@@ -40,9 +40,6 @@ class FileServer extends React.Component {
     }
 
     componentDidMount(){
-        if(/Android/i.test(navigator.userAgent)){
-            $('.file-server .android-tip').css("display", "block");
-		}
 		if(!this.props.isFromServeRender){
 			axios.get(URL.getList)
             	.then(function(response) {

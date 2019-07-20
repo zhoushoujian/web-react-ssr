@@ -1,6 +1,7 @@
+const host = "http://localhost:9527"
 export const URL = {
-    upload: "http://localhost:9527/Images",
-    download: "http://localhost:9527/src/Images/{filename}",
-	delete: "http://localhost:9527/delete_file/{filename}",
-	getList: "http://localhost:9527/get_list"
+    upload: host + "/Images",
+    download:  host + "/src/Images/{filename}",
+	delete:  host + "/delete_file/{filename}",
+	getList:  host + "/get_list"
 }
