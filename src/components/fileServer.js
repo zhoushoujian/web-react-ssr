@@ -24,7 +24,7 @@ function uploadProgress (evt) {
         var percentComplete = Math.round(evt.loaded * 100 / evt.total);
         document.getElementById('progress').innerHTML = percentComplete.toString() + '%';
     } else {
-        document.getElementById('progress').innerHTML = 'unable to compute';
+        document.getElementById('progress').innerHTML = 'uncomputable';
     }
 }
 
