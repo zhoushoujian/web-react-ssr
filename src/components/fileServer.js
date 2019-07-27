@@ -142,8 +142,8 @@ class FileServer extends React.Component {
                             alert('上传成功！');
                             document.getElementById('btnSubmit').value = "上传";
                             document.getElementById('progress').innerHTML = '';
-                            window.$dispatch(updateText(Math.random()))
-                            window.$dispatch(updateFileList(fileList))
+                            // window.$dispatch(updateText(Math.random()))
+                            // window.$dispatch(updateFileList(fileList))
                             i++
                             if (i >= fileNum) {
                                 return;
@@ -210,8 +210,8 @@ class Child extends React.Component{
                     } else {
                         alert("删除失败!");
                     }
-                    window.$dispatch(updateText(Math.random()))
-                    window.$dispatch(updateFileList(fileList))
+                    // window.$dispatch(updateText(Math.random()))
+                    // window.$dispatch(updateFileList(fileList))
                 })
                 .catch(error => {
                     console.error("删除文件过程中发生了错误", error.stack||error.toString());

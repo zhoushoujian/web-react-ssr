@@ -62,7 +62,7 @@ app.get( "/", ( req, res ) => {
         <html>
         <head>
             <meta charset="utf-8">
-			<title>${'欢迎使用文件服务器'}</title>
+			<title>${'欢迎使用webSocket文件服务器'}</title>
 			<meta name="description" content=${'description'} />
     		<meta name="keywords" content=${'keywords'} />
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
