@@ -1,4 +1,5 @@
-const host = "http://localhost:9527"
+export const domain = "localhost:9527"
+const host = `http://${domain}`;
 export const URL = {
     upload: host + "/Images",
     download:  host + "/src/Images/{filename}",

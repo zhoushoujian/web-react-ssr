@@ -7,6 +7,7 @@ import formidable from "formidable"
 import Render from "./static/render"
 import chokidar from "chokidar"
 import { exec } from "child_process"
+import WebSocket from "ws"
 
 import React from "react";
 import { renderToNodeStream } from "react-dom/server";
@@ -17,9 +18,11 @@ import { updateFileList, updateText, updateIsFromServeRender, createDuxStore } f
 
 //config
 const config = {
-	useHotBuild: false,
+	useHotBuild: true,
 	NODE_ENV_PRODUCTION: true
 }
+
+const connections = {}
 
 const app = express();
 app.use( express.static( path.resolve( __dirname, "../dist" ) ) );
@@ -29,10 +32,9 @@ app.all('*', function (req, res, next){
     next()
 })
 
-app.get( "/", ( req, res ) => {
-    const context = { };
-    let finalList = [];
-    let content = fs.readdirSync(path.join(__dirname, "Images"));
+function getFileList(){
+	let finalList = [];
+	let content = fs.readdirSync(path.join(__dirname, "Images"));
     for(let i=0; i<content.length; i++){
         let singleList = [],
             filePath = path.join(__dirname + "/Images/" + content[i]);
@@ -40,7 +42,15 @@ app.get( "/", ( req, res ) => {
         let stats = fs.statSync(filePath);
         singleList.push(stats.size);
         finalList.push(singleList);
-    };
+	};
+	return finalList;
+}
+
+if(!global.window) global.window = global
+
+app.get( "/", ( req, res ) => {
+    const context = { };
+    let finalList = getFileList();
     const store = createDuxStore( );
 	store.dispatch(updateText("456"))
 	store.dispatch(updateIsFromServeRender(true))
@@ -129,7 +139,9 @@ function uploadFiles(req, res){
             let writeStream = fs.createWriteStream(path.join(__dirname, "Images/" + filesName));
             readStream.pipe(writeStream);
             readStream.on('end', function() {
-                fs.unlinkSync(files.files.path);
+				fs.unlinkSync(files.files.path);
+				let finalList = getFileList();
+				writeWSResponse(finalList, 'get-files-array')
             });
         } else {
             console.info(`  上传的是多文件`);
@@ -148,10 +160,12 @@ function uploadFiles(req, res){
                 let writeStream = fs.createWriteStream("Images/" + filesArray[i].name);
                 readStream.pipe(writeStream);
                 readStream.on('end', function() {
-                    fs.unlinkSync(files.files[i].path);
+					fs.unlinkSync(files.files[i].path);
+					let finalList = getFileList();
+					writeWSResponse(finalList, 'get-files-array')
                 });
             }
-        }
+		}
         res.end(util.inspect({
             fields: fields,
             files: files
@@ -165,16 +179,7 @@ function uploadFiles(req, res){
 
 function getFilesList(req, res){
     try {
-        let finalList = [];
-        let content = fs.readdirSync(path.join(__dirname, "Images"));
-        for(let i=0; i<content.length; i++){
-            let singleList = [],
-                filePath = path.join(__dirname + "/Images/" + content[i]);
-            singleList.push(content[i]);
-            let stats = fs.statSync(filePath);
-            singleList.push(stats.size);
-            finalList.push(singleList);
-        };
+        let finalList = getFileList();
         console.info(` server  反馈给ajax的请求`, finalList.length);
         return writeResponse(res, finalList);
     } catch (err) {
@@ -192,7 +197,9 @@ function deleteFiles(req, res){
         if (fs.existsSync(path.join(__dirname, `./Images/${filename}`))) {
             fs.unlink(path.join(__dirname, `./Images/${filename}`), function(err) {
                 if (err) throw err;
-                console.info(`  ${filename}删除成功!`);
+				console.info(`  ${filename}删除成功!`);
+				let finalList = getFileList();
+				writeWSResponse(finalList, 'delete-files-array')
                 return writeResponse(res, "success");
             });
         } else {
@@ -214,7 +221,65 @@ function fileDownload(req, res){
     }
 }
 
-app.listen( 9527 );
+function socketVerify(info) {
+	// console.log(info.origin);
+	// console.log(info.req.t);
+	// console.log(info.secure);
+	return true; //否则拒绝
+  }
+
+let server = app.listen( 9527 );
+var wss = new WebSocket.Server({
+	server,
+	perMessageDeflate: false, //启用压缩
+	handleProtocols: "file",
+	verifyClient: socketVerify
+});
+
+wss.on('connection', function connection(ws, req) {
+	getIp(req, "WebSocket connect");
+	ws.on('message', function incoming(message) {
+		try{
+			message = JSON.parse(message)
+			if(message.type === "try-connect"){
+				console.log('received: %s', JSON.stringify(message));
+				connections[message.id] = ws;
+				if(!!connections[message.id]){
+					writeWSResponse(Date.now(), "response-date", connections[message.id])
+					writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
+				}
+			}
+		} catch (err){
+			console.error("incoming err", err)
+		}
+	});
+
+});
+
+let wsHeart = setInterval(() => {
+	writeWSResponse(Date.now(), "heart-beat")
+}, 300000)
+
+function writeWSResponse(data, type="", connectionsId){
+	console.info("writeWSResponse data", data)
+	let response = Object.assign({},{
+		status: 200,
+		data,
+		type
+	})
+	if(!connectionsId){
+		//Server broadcast
+		wss.clients.forEach(function each(client) {
+			client.send(Buffer.from(JSON.stringify(response)), {
+				binary: false
+			})
+		});
+	} else {
+		connectionsId.send(Buffer.from(JSON.stringify(response)), {
+			binary: false
+		})
+	}
+}
 
 console.info("server is running at 9527")
 

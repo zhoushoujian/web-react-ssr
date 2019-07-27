@@ -4,7 +4,7 @@ import { confirm, alert, calcSize } from "../utils";
 import { updateFileList, updateText } from "../store";
 import { networkErr } from "../utils";
 import axios from "axios";
-import { URL } from "./constant";
+import { URL, domain } from "./constant";
 
 String.prototype.format = function() {
 	var str = this.toString();
@@ -37,7 +37,55 @@ class FileServer extends React.Component {
 
     constructor(props){
         super(props);
-    }
+	}
+
+	componentWillMount() {
+		let self = this;
+		let id = String(Date.now() + (Math.random()*10000).toFixed(0)) || "aaaaaa"
+		if(window.WebSocket){
+			this.ws = new WebSocket(`ws://${domain}`);
+			this.ws.onopen = function open() {
+				console.log('connected', self.ws.readyState);
+				let msg = Object.assign({},{
+					type:'try-connect',
+					id,
+					date: Date.now()
+				})
+				self.ws.send(JSON.stringify(msg));
+			};
+
+			this.ws.onmessage = function incoming(data) {
+				try {
+					data = JSON.parse(data.data);
+					switch(data.type){
+						case "response-date":
+							console.log(`Roundtrip time: ${Date.now() - data.data} ms`);
+							break;
+						case "order-string":
+							console.log(data.data);
+							break;
+						case "get-files-array":
+							$dispatch(updateFileList(data.data));
+							console.log(data);
+							break;
+						case "delete-files-array":
+							$dispatch(updateFileList(data.data));
+							console.log(data);
+							break;
+						case "heart-beat":
+							console.log(data);
+						default:
+							break;
+					}
+				} catch (err){
+					console.error("onmessage JSON.parse", err)
+				}
+			};
+
+		} else {
+			console.info("不支持webSocket！！！")
+		}
+	}
 
     componentDidMount(){
 		if(!this.props.isFromServeRender){
@@ -48,7 +96,7 @@ class FileServer extends React.Component {
             	    window.$dispatch(updateFileList(array));
             })
 		}
-    }
+	}
 
     uploadFiles = () => {
         let filename, fileSize, fileList;
@@ -71,7 +119,7 @@ class FileServer extends React.Component {
                     return
                 }
                 document.getElementById('btnSubmit').value = "上传中";
-                var formData = new FormData();　　　　　　　　　　
+                var formData = new FormData();
                 formData.append('files', files[i]);
                 var xhr = new XMLHttpRequest();
                 xhr.upload.addEventListener("progress", uploadProgress, false);
@@ -79,7 +127,7 @@ class FileServer extends React.Component {
                 xhr.open('POST', URL.upload);
                 xhr.onreadystatechange = () => {
                     if (xhr.readyState === 4 && xhr.status === 200) {
-                        console.info('上传成功' + xhr.responseText);
+                        // console.info('上传成功' + xhr.responseText);
                         /* if (xhr.responseText === "非法类型的文件") {
                             alert('非法类型的文件');
                         } else  */
