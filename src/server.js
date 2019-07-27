@@ -246,6 +246,7 @@ wss.on('connection', function connection(ws, req) {
 				connections[message.id] = ws;
 				if(!!connections[message.id]){
 					writeWSResponse(Date.now(), "response-date", connections[message.id])
+					writeWSResponse(`游客${message.id}加入`, 'order-string')
 					writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
 				}
 			}

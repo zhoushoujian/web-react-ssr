@@ -46,6 +46,7 @@ class FileServer extends React.Component {
 			this.ws = new WebSocket(`ws://${domain}`);
 			this.ws.onopen = function open() {
 				console.log('connected', self.ws.readyState);
+				console.log("当前游客id", id)
 				let msg = Object.assign({},{
 					type:'try-connect',
 					id,
