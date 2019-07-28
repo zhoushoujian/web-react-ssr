@@ -21,21 +21,8 @@ const LOG_PATH = path.join(__dirname, "./server.log");
     "debug:debug:FgBlue,info::FgGreen,warn:警告:FgYellow,error:error:FgRed".split(",").forEach(function (logcolor) {
         let [log, info, color] = logcolor.split(':');
         let logger = function (...args) {
-            var m = args.slice(1, args.length - 1).map(function(s){
-                return JSON.stringify(s,function(k,v){
-                    if (typeof v === 'function') {
-                        return Function.prototype.toString.call(v)
-                    } else {
-                        // for (var i in v) {
-                        //     var p = v[i];
-                            
-                        //     v[i] = p instanceof Function ? String(p) : p;
-                        // }
-                        return v;
-                    }
-                },4)
-            });
-            process.stdout.write(args[0] + m + args[args.length - 1] + '\n\n')
+            var m = args.slice(1, args.length - 1);
+            console.log(args[0] + m + args[args.length - 1])
         } || console[log] || console.log;
         console[log] = (...args) => logger.apply(null, [`${colors[color]}[${getTime()}] [${info.toUpperCase()||log.toUpperCase()}]${colors.Reset} `, ...args, colors.Reset]);
     });
@@ -147,17 +134,14 @@ function InitLogger() {
 }
 
 function loggerInFile(level, data, ...args) {
-    console[level].apply(this, Array.prototype.slice.call(arguments).slice(1));
+	console[level].apply(this, Array.prototype.slice.call(arguments).slice(1));
+	if(level === "debug") return;
     let extend = "";
     if (args.length) {
         extend = args.map(s => JSON.stringify(s, function (p, o) {
             if (typeof o === 'function') {
                 return Function.prototype.toString.call(o)
             } else {
-                for (var k in o) {
-                    var v = o[k];
-                    o[k] = v instanceof Function ? String(v) : v;
-                }
                 return o;
             }
         }, 4));
@@ -167,8 +151,7 @@ function loggerInFile(level, data, ...args) {
     }
     data = Object.prototype.toString.call(data) === '[object Object]' ? JSON.stringify(data) : data;
     let content = `${data}` + `${extend}` + "\r\n";
-    this.time = getTime;
-    doLogInFile(`[${this.time()}]  [${level.toUpperCase()}]  ${content}`);
+    doLogInFile(`[${getTime()}]  [${level.toUpperCase()}]  ${content}`);
 }
 
 LOGGER_LEVEL.reduce(function (total, level, cx) {

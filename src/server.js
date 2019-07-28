@@ -8,13 +8,14 @@ import Render from "./static/render"
 import chokidar from "chokidar"
 import { exec } from "child_process"
 import WebSocket from "ws"
+import logger from "./logger"
 
 import React from "react";
 import { renderToNodeStream } from "react-dom/server";
 import { StaticRouter } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import App from "./components/fileServer";
-import { updateFileList, updateText, updateIsFromServeRender, createDuxStore } from "./store";
+import { updateFileList, updateIsFromServeRender, createDuxStore } from "./store";
 
 //config
 const config = {
@@ -52,7 +53,6 @@ app.get( "/", ( req, res ) => {
     const context = { };
     let finalList = getFileList();
     const store = createDuxStore( );
-	store.dispatch(updateText("456"))
 	store.dispatch(updateIsFromServeRender(true))
     store.dispatch(updateFileList(finalList));
     const reduxState = store.getState();
@@ -110,10 +110,10 @@ function uploadFiles(req, res){
         form.on('file', function(filed, file) {
             files.push([filed, file]);
         }).parse(req, function(err, fields, files) {
-        // console.info("fields", fields);
-        // console.info("files", files);
+        // logger.info("fields", fields);
+        // logger.info("files", files);
         if (err) {
-            console.info(`uploadFiles formidable err` + err.message);
+            logger.info(`uploadFiles formidable err` + err.message);
             return reportError(req, res, err);
         }
         let filesArray = files.files;
@@ -121,7 +121,7 @@ function uploadFiles(req, res){
         if (Object.prototype.toString.call(files.files) === '[object Object]') {
             let filesName = files.files.name;
             let fileSize = files.files.size;
-            console.info(` 上传的是单文件`, filesName);
+            logger.info(` 上传的是单文件`, filesName);
             /*  if (!/\.exe$|\.apk$/gim.test(filesName)) {
                  return res.end("非法类型的文件");
              } else  */
@@ -134,7 +134,7 @@ function uploadFiles(req, res){
                 'content-type': 'application/octet-stream'
             });
             res.write('received upload:\n\n');
-            //console.info("files", files.files.path);
+            //logger.info("files", files.files.path);
             let readStream = fs.createReadStream(files.files.path);
             let writeStream = fs.createWriteStream(path.join(__dirname, "Images/" + filesName));
             readStream.pipe(writeStream);
@@ -144,9 +144,9 @@ function uploadFiles(req, res){
 				writeWSResponse(finalList, 'get-files-array')
             });
         } else {
-            console.info(`  上传的是多文件`);
+            logger.info(`  上传的是多文件`);
             for (let i = 0; i < filesNum; i++) {
-                console.info(`  上传的文件名`, filesArray[i].name);
+                logger.info(`  上传的文件名`, filesArray[i].name);
                 /* if (!/\.exe$|\.apk$/gim.test(filesArray[i].name)) {
                     return res.end("非法类型的文件");
                 } else  */
@@ -172,7 +172,7 @@ function uploadFiles(req, res){
         }));
         });
     } catch (err) {
-        console.error("uploadFiles error", err.stack || err.toString());
+        logger.error("uploadFiles error", err.stack || err.toString());
         return reportError(req, res, err);
     }
 }
@@ -180,10 +180,10 @@ function uploadFiles(req, res){
 function getFilesList(req, res){
     try {
         let finalList = getFileList();
-        console.info(` server  反馈给ajax的请求`, finalList.length);
+        logger.info(` server  反馈给ajax的请求`, finalList.length);
         return writeResponse(res, finalList);
     } catch (err) {
-        console.error("getFilesList error", err.stack || err.toString());
+        logger.error("getFilesList error", err.stack || err.toString());
         return reportError(req, res, err);
     }
 }
@@ -193,11 +193,11 @@ function deleteFiles(req, res){
         let pathname = url.parse(req.url).pathname;
         console.log("pathname", pathname)
         let filename = decodeURIComponent(pathname).split("/")[decodeURIComponent(pathname).split("/").length - 1];
-        console.info(` server delete filename`, filename);
+        logger.info(` server delete filename`, filename);
         if (fs.existsSync(path.join(__dirname, `./Images/${filename}`))) {
             fs.unlink(path.join(__dirname, `./Images/${filename}`), function(err) {
                 if (err) throw err;
-				console.info(`  ${filename}删除成功!`);
+				logger.info(`  ${filename}删除成功!`);
 				let finalList = getFileList();
 				writeWSResponse(finalList, 'delete-files-array')
                 return writeResponse(res, "success");
@@ -206,7 +206,7 @@ function deleteFiles(req, res){
             return writeResponse(res, "removed");
         }
     } catch (err) {
-        console.error("deleteFiles error", err.stack || err.toString());
+        logger.error("deleteFiles error", err.stack || err.toString());
         return reportError(req, res, err);
     }
 }
@@ -216,7 +216,7 @@ function fileDownload(req, res){
         const _render = new Render(req, res);
         _render.init()
     } catch (err){
-        console.error("文件下载出错", err.stack || err.toString());
+        logger.error("文件下载出错", err.stack || err.toString());
         return reportError(req, res, err);
     }
 }
@@ -242,27 +242,24 @@ wss.on('connection', function connection(ws, req) {
 		try{
 			message = JSON.parse(message)
 			if(message.type === "try-connect"){
-				console.log('received: %s', JSON.stringify(message));
+				console.log('received: ', JSON.stringify(message));
 				connections[message.id] = ws;
-				if(!!connections[message.id]){
-					writeWSResponse(Date.now(), "response-date", connections[message.id])
-					writeWSResponse(`游客${message.id}加入`, 'order-string')
-					writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
+				writeWSResponse(Date.now(), "response-date", connections[message.id])
+				writeWSResponse(`游客${message.id}加入`, 'order-string')
+				writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
+			} else if(message.type === "check-connect"){
+				if(message.date === 'ping'){
+					writeWSResponse(Date.now(), "heart-beat", connections[message.id])
 				}
 			}
 		} catch (err){
-			console.error("incoming err", err)
+			logger.error("incoming err", err)
 		}
 	});
-
 });
 
-let wsHeart = setInterval(() => {
-	writeWSResponse(Date.now(), "heart-beat")
-}, 300000)
-
 function writeWSResponse(data, type="", connectionsId){
-	console.info("writeWSResponse data", data)
+	logger.info("writeWSResponse data", data)
 	let response = Object.assign({},{
 		status: 200,
 		data,
@@ -282,14 +279,14 @@ function writeWSResponse(data, type="", connectionsId){
 	}
 }
 
-console.info("server is running at 9527")
+logger.info("server is running at 9527")
 
 function getIp(req, str) {
     let ip = req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '';
     if (ip.split(',').length > 0) {
         ip = ip.split(',')[0]
     }
-    console.info(` ${str}的访问者ip`, ip);
+    logger.info(` ${str}的访问者ip`, ip);
 }
 function writeResponse(res, data) {
     if(res) {
@@ -308,14 +305,14 @@ function writeResponse(res, data) {
             tmpBuf = null;
         } catch(e) {
             // Don't leave the client handing
-            console.error("writeResponse e", e.stack || e.toString());
+            logger.error("writeResponse e", e.stack || e.toString());
             res.status(500).end(e.stack || e.toString());
         }
     }
 }
 function reportError(req, res, userErr) {
     try {
-        console.error("url", req.originalUrl, 'userErr', userErr.stack||userErr.toString())
+        logger.error("url", req.originalUrl, 'userErr', userErr.stack||userErr.toString())
         var wrapper = JSON.stringify({
             status  : 'FAILURE',
             result  : {
@@ -335,7 +332,7 @@ function reportError(req, res, userErr) {
     } catch(e) {
         // Don't leave client hanging
         res.status(500).end();
-        console.error("reportError e", e.stack || e.toString())
+        logger.error("reportError e", e.stack || e.toString())
     }
 }
 
@@ -348,39 +345,39 @@ function reportError(req, res, userErr) {
 			ignored: /(^|[\/\\])\..|node_modules/,
 			persistent: true
 		});
-		watcher.on('ready', () => console.info('Initial scan complete. Ready for changes'));
-		console.info("begin to monitor")
+		watcher.on('ready', () => logger.info('Initial scan complete. Ready for changes'));
+		logger.info("begin to monitor")
 		watcher
-			.on('error', error => console.error(`Watcher error`, error))
+			.on('error', error => logger.error(`Watcher error`, error))
 			.on('all', (event, path) => {
-				console.warn("监听到了文件变化")
+				logger.warn("监听到了文件变化")
 				if (workTimer) {
 					clearTimeout(workTimer);
 				}
 				workTimer = setTimeout(function () {
 					clearTimeout(workTimer);
-					console.warn("开始执行构建")
-					console.log(__dirname)
+					logger.debug("开始执行构建")
+					console.debug(__dirname)
 					// process.chdir(require('path').resolve(__dirname.slice(0,-3)));
 					console.log(require('path').resolve(__dirname.slice(0, -3)))
 					let child1 = exec("yarn dev");
 					child1.stdout.on('data', function (data) {
-						console.info('子进程', data.toString());
+						logger.debug('子进程', data.toString());
 					});
 					child1.stderr.on('data', function (data) {
-						// console.warn("stderr", data);
+						// logger.warn("stderr", data);
 					});
 					child1.on('exit', function (code) {
-						console.info('子进程1已退出，代码：' + code);
+						logger.debug('子进程1已退出，代码：' + code);
 					})
 				}, 3000)
 			})
 		//捕获异常
 		process.on('uncaughtException', function (err) {
 			if (err == "Error: kill ESRCH") {
-				console.error("Error: kill ESRCH 子进程已退出");
+				logger.error("Error: kill ESRCH 子进程已退出");
 			} else {
-				console.warn('Caught exception: ' + err);
+				logger.warn('Caught exception: ' + err);
 			}
 		});
 	}

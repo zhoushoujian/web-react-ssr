@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from "react-redux";
 import { confirm, alert, calcSize } from "../utils";
-import { updateFileList, updateText } from "../store";
+import { updateFileList } from "../store";
 import { networkErr } from "../utils";
 import axios from "axios";
 import { URL, domain } from "./constant";
@@ -40,49 +40,33 @@ class FileServer extends React.Component {
 	}
 
 	componentWillMount() {
-		let self = this;
-		let id = String(Date.now() + (Math.random()*10000).toFixed(0)) || "aaaaaa"
+		let self = this, id;
+		if('localStorage' in window){
+			if(window.localStorage.getItem("id")){
+				id = window.localStorage.getItem("id")
+			} else {
+				id = String(Date.now() + (Math.random()*10000).toFixed(0))
+				window.localStorage.setItem("id", id);
+			}
+		}
 		if(window.WebSocket){
 			this.ws = new WebSocket(`ws://${domain}`);
-			this.ws.onopen = function open() {
-				console.log('connected', self.ws.readyState);
-				console.log("当前游客id", id)
-				let msg = Object.assign({},{
-					type:'try-connect',
-					id,
-					date: Date.now()
-				})
-				self.ws.send(JSON.stringify(msg));
-			};
-
-			this.ws.onmessage = function incoming(data) {
-				try {
-					data = JSON.parse(data.data);
-					switch(data.type){
-						case "response-date":
-							console.log(`Roundtrip time: ${Date.now() - data.data} ms`);
-							break;
-						case "order-string":
-							console.log(data.data);
-							break;
-						case "get-files-array":
-							$dispatch(updateFileList(data.data));
-							console.log(data);
-							break;
-						case "delete-files-array":
-							$dispatch(updateFileList(data.data));
-							console.log(data);
-							break;
-						case "heart-beat":
-							console.log(data);
-						default:
-							break;
+			this.ws.onopen = () => {
+				self.openWS(self, self.ws.readyState, id)
+				let checkState = setInterval(() => {
+					if(self.ws.readyState !== 1){
+						self.ws.close()
+						console.warn("正在重新建立连接...");
+						self.ws = new WebSocket(`ws://${domain}`);
+						self.ws.onopen = () => self.openWS(self, self.ws.readyState, id);
+						self.ws.onmessage = (data) => self.incomingMessage(data);
+					} else {
+						let message = Object.assign({},{ type:'check-connect', id, date: "ping" });
+						self.ws.send(JSON.stringify(message));
 					}
-				} catch (err){
-					console.error("onmessage JSON.parse", err)
-				}
+				}, 20000)
 			};
-
+			this.ws.onmessage = (data) => this.incomingMessage(data);
 		} else {
 			console.info("不支持webSocket！！！")
 		}
@@ -96,6 +80,45 @@ class FileServer extends React.Component {
             	    if (!array.length) return;
             	    window.$dispatch(updateFileList(array));
             })
+		}
+	}
+
+	openWS = (self, readyState, id) => {
+		console.log('connected', readyState);
+		console.log("当前游客id", id)
+		let msg = Object.assign({},{
+			type:'try-connect',
+			id,
+			date: Date.now()
+		})
+		self.ws.send(JSON.stringify(msg));
+	}
+
+	incomingMessage = (data) => {
+		try {
+			data = JSON.parse(data.data);
+			switch(data.type){
+				case "response-date":
+					console.log(`Roundtrip time: ${Date.now() - data.data} ms`);
+					break;
+				case "order-string":
+					console.log(data.data);
+					break;
+				case "get-files-array":
+					$dispatch(updateFileList(data.data));
+					console.log(data);
+					break;
+				case "delete-files-array":
+					$dispatch(updateFileList(data.data));
+					console.log(data);
+					break;
+				case "heart-beat":
+					console.log(data);
+				default:
+					break;
+			}
+		} catch (err){
+			console.error("onmessage JSON.parse", err)
 		}
 	}
 
