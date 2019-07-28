@@ -258,7 +258,8 @@ wss.on('connection', function connection(ws, req) {
 	});
 	ws.on('close', (code, msg) => {
 		if(code === 1001){
-			writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
+			writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string');
+			ws.terminate()
 		}
 	})
 });
