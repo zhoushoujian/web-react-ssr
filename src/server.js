@@ -231,7 +231,7 @@ function socketVerify(info) {
 let server = app.listen( 9527 );
 var wss = new WebSocket.Server({
 	server,
-	perMessageDeflate: true, //启用压缩
+	perMessageDeflate: true,
 	handleProtocols: "file",
 	verifyClient: socketVerify
 });
