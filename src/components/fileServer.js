@@ -73,14 +73,14 @@ class FileServer extends React.Component {
 	}
 
     componentDidMount(){
-		if(!this.props.isFromServeRender){
-			axios.get(URL.getList)
-            	.then(function(response) {
-            	    let array = response.data.result;
-            	    if (!array.length) return;
-            	    window.$dispatch(updateFileList(array));
-            })
-		}
+		// if(!this.props.isFromServeRender){
+		// 	axios.get(URL.getList)
+        //     	.then(function(response) {
+        //     	    let array = response.data.result;
+        //     	    if (!array.length) return;
+        //     	    window.$dispatch(updateFileList(array));
+        //     })
+		// }
 	}
 
 	openWS = (self, readyState, id) => {

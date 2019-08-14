@@ -87,7 +87,8 @@ app.get( "/", ( req, res ) => {
                 </script>
                 <script src="./js/bundle.js"></script>
                 <script src="./js/fileServer.js"></script>
-                <script src="./js/manifest.js"></script>
+				<script src="./js/manifest.js"></script>
+				<script src="./js/vendor.js"></script>
             </body>
             </html>
         `);
@@ -237,6 +238,7 @@ var wss = new WebSocket.Server({
 });
 
 wss.on('connection', function connection(ws, req) {
+	var id;
 	getIp(req, "WebSocket connect");
 	ws.on('message', function incoming(message) {
 		try{
@@ -244,6 +246,7 @@ wss.on('connection', function connection(ws, req) {
 			if(message.type === "try-connect"){
 				console.log('received: ', JSON.stringify(message));
 				connections[message.id] = ws;
+				id = message.id;
 				writeWSResponse(Date.now(), "response-date", connections[message.id])
 				writeWSResponse(`游客${message.id}加入`, 'order-string')
 				writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
@@ -258,6 +261,7 @@ wss.on('connection', function connection(ws, req) {
 	});
 	ws.on('close', (code, msg) => {
 		if(code === 1001){
+			delete connections[id];
 			writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string');
 			ws.terminate()
 		}
