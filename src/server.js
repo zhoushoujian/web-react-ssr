@@ -238,7 +238,7 @@ var wss = new WebSocket.Server({
 });
 
 wss.on('connection', function connection(ws, req) {
-	var id;
+	let id;
 	getIp(req, "WebSocket connect");
 	ws.on('message', function incoming(message) {
 		try{
@@ -262,6 +262,7 @@ wss.on('connection', function connection(ws, req) {
 	ws.on('close', (code, msg) => {
 		if(code === 1001){
 			delete connections[id];
+			writeWSResponse(`游客${id}离开`, 'order-string')
 			writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string');
 			ws.terminate()
 		}
