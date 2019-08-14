@@ -88,7 +88,6 @@ app.get( "/", ( req, res ) => {
                 <script src="./js/bundle.js"></script>
                 <script src="./js/fileServer.js"></script>
 				<script src="./js/manifest.js"></script>
-				<script src="./js/vendor.js"></script>
             </body>
             </html>
         `);
