@@ -2,19 +2,19 @@
     margin: 0;
     padding: 0;
 }
+body{
+    background-color: #F5F5D5;
+}
 .file-server{
     display: flex;
     width: 100%;
-    height: calc(100vh - 55px);
     flex-direction: column;
     .head{
         text-align: center;
-        background-color: #81AFED;
         padding-bottom: 20px;
         padding-top: 20px;
         width: 100%;
-        color: #fff;
-        font-size: 18px;
+        font-size: 24px;
         font-weight: normal;
         line-height: 24px;
         height: 24px;
@@ -33,19 +33,13 @@
     .warning{
         padding-left: 20px;
     }
-    .android-tip{
-        display:none;
-        padding-left: 20px;
-        padding-top: 10px;
-        color: #bababa;
-    }
     #container{
         display: block;
-        margin-left: 20px;
-        margin-top: 20px;
+		margin-left: 20px;
+		max-height: calc(100vh - 124px);
         overflow-y: auto;
         .file-item{
-            margin: 5px 0;
+            margin: 10px 0;
             word-break: break-all;
         }
         .file-link {

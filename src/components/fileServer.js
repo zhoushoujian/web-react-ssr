@@ -35,11 +35,7 @@ function uploadFailed(evt) {
 
 class FileServer extends React.Component {
 
-    constructor(props){
-        super(props);
-	}
-
-	componentWillMount() {
+    componentDidMount(){
 		let self = this, id;
 		if('localStorage' in window){
 			if(window.localStorage.getItem("id")){
@@ -70,22 +66,12 @@ class FileServer extends React.Component {
 		} else {
 			console.info("不支持webSocket！！！")
 		}
-	}
-
-    componentDidMount(){
-		// if(!this.props.isFromServeRender){
-		// 	axios.get(URL.getList)
-        //     	.then(function(response) {
-        //     	    let array = response.data.result;
-        //     	    if (!array.length) return;
-        //     	    window.$dispatch(updateFileList(array));
-        //     })
-		// }
+		console.log("REDUX_DATA", REDUX_DATA.fileServer)
 	}
 
 	openWS = (self, readyState, id) => {
 		console.log('connected', readyState);
-		console.log("当前游客id", id)
+		// console.log("当前游客id", id)
 		let msg = Object.assign({},{
 			type:'try-connect',
 			id,
@@ -165,7 +151,8 @@ class FileServer extends React.Component {
                             fileList = fileList.sort();
                             alert('上传成功！');
                             document.getElementById('btnSubmit').value = "上传";
-                            document.getElementById('progress').innerHTML = '';
+							document.getElementById('progress').innerHTML = '';
+							console.log("上传: ", filename)
                             // window.$dispatch(updateText(Math.random()))
                             // window.$dispatch(updateFileList(fileList))
                             i++
@@ -194,8 +181,6 @@ class FileServer extends React.Component {
                         <div id='progress'></div>
                     </div>
                 </div>
-                <div className="warning">可以上传任意文件,但单文件大小不得超过1GB! </div>
-                <div className="android-tip">文件存放:/storage/emulated/0/miXingFeng/downloads</div>
                 <div id="container">
                     {fileList.length
                         ? fileList.map((item, index) => <Child fileInfo={item} key={index} />)
@@ -225,6 +210,7 @@ class Child extends React.Component{
         confirm("提示", "确定要删除吗?", "确定", function(){
             axios.delete(URL.delete.format({filename}))
                 .then(response => {
+					console.log("删除: ", filename)
                     fileList.splice(list.indexOf(filename), 1);
                     if (response.data.result === 'removed') {
                         alert("文件已删除!");
@@ -260,8 +246,7 @@ class Child extends React.Component{
 const mapStateToProps = state => {
     return {
         fileList: state.fileServer.fileList,
-		text: state.fileServer.text,
-		isFromServeRender: state.fileServer.isFromServeRender
+		text: state.fileServer.text
     };
 };
 

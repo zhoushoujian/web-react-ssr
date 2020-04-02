@@ -3,12 +3,13 @@ import path from "path"
 import fs from "fs"
 import util from "util"
 import url from "url"
+import os from "os"
 import formidable from "formidable"
 import Render from "./static/render"
 import chokidar from "chokidar"
 import { exec } from "child_process"
 import WebSocket from "ws"
-import logger from "./logger"
+import Logger from "beauty-logger"
 
 import React from "react";
 import { renderToNodeStream } from "react-dom/server";
@@ -19,10 +20,10 @@ import { updateFileList, updateIsFromServeRender, createDuxStore } from "./store
 
 //config
 const config = {
-	useHotBuild: true,
-	NODE_ENV_PRODUCTION: true
+	useHotBuild: false
 }
 
+const logger = new Logger()
 const connections = {}
 
 const app = express();
@@ -67,7 +68,7 @@ app.get( "/", ( req, res ) => {
     		<meta name="keywords" content=${'keywords'} />
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 			<link rel="shortcut icon" href="./favicon.ico">
-			${config.NODE_ENV_PRODUCTION ? "<link rel='stylesheet' href='./css/0.fileServer.css'>" : "<link rel='stylesheet' href='./css/bundle.fileServer.css'>"}
+			<link rel='stylesheet' href='./css/0.fileServer.css'>
         </head>
         <body>
             <div id="app">`
@@ -88,6 +89,7 @@ app.get( "/", ( req, res ) => {
                 <script src="./js/bundle.js"></script>
                 <script src="./js/fileServer.js"></script>
 				<script src="./js/manifest.js"></script>
+				<script src="./js/vendor.js"></script>
             </body>
             </html>
         `);
@@ -141,7 +143,7 @@ function uploadFiles(req, res){
             readStream.on('end', function() {
 				fs.unlinkSync(files.files.path);
 				let finalList = getFileList();
-				writeWSResponse(finalList, 'get-files-array')
+				writeWSResponse(finalList, 'get-files-array', null, req)
             });
         } else {
             logger.info(`  上传的是多文件`);
@@ -162,7 +164,7 @@ function uploadFiles(req, res){
                 readStream.on('end', function() {
 					fs.unlinkSync(files.files[i].path);
 					let finalList = getFileList();
-					writeWSResponse(finalList, 'get-files-array')
+					writeWSResponse(finalList, 'get-files-array', null, req)
                 });
             }
 		}
@@ -191,7 +193,7 @@ function getFilesList(req, res){
 function deleteFiles(req, res){
     try{
         let pathname = url.parse(req.url).pathname;
-        console.log("pathname", pathname)
+        logger.info("pathname", pathname)
         let filename = decodeURIComponent(pathname).split("/")[decodeURIComponent(pathname).split("/").length - 1];
         logger.info(` server delete filename`, filename);
         if (fs.existsSync(path.join(__dirname, `./Images/${filename}`))) {
@@ -199,7 +201,7 @@ function deleteFiles(req, res){
                 if (err) throw err;
 				logger.info(`  ${filename}删除成功!`);
 				let finalList = getFileList();
-				writeWSResponse(finalList, 'delete-files-array')
+				writeWSResponse(finalList, 'delete-files-array', null, req)
                 return writeResponse(res, "success");
             });
         } else {
@@ -222,11 +224,8 @@ function fileDownload(req, res){
 }
 
 function socketVerify(info) {
-	// console.log(info.origin);
-	// console.log(info.req.t);
-	// console.log(info.secure);
-	return true; //否则拒绝
-  }
+	return true;
+}
 
 let server = app.listen( 9527 );
 var wss = new WebSocket.Server({
@@ -243,15 +242,15 @@ wss.on('connection', function connection(ws, req) {
 		try{
 			message = JSON.parse(message)
 			if(message.type === "try-connect"){
-				console.log('received: ', JSON.stringify(message));
+				logger.info('received: ', JSON.stringify(message));
 				connections[message.id] = ws;
 				id = message.id;
-				writeWSResponse(Date.now(), "response-date", connections[message.id])
-				writeWSResponse(`游客${message.id}加入`, 'order-string')
-				writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string')
+				writeWSResponse(Date.now(), "response-date", connections[message.id], req)
+				writeWSResponse(`游客${message.id}加入`, 'order-string', null, req)
+				writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string', null, req)
 			} else if(message.type === "check-connect"){
 				if(message.date === 'ping'){
-					writeWSResponse(Date.now(), "heart-beat", connections[message.id])
+					writeWSResponse(Date.now(), "heart-beat", connections[message.id], req)
 				}
 			}
 		} catch (err){
@@ -261,15 +260,16 @@ wss.on('connection', function connection(ws, req) {
 	ws.on('close', (code, msg) => {
 		if(code === 1001){
 			delete connections[id];
-			writeWSResponse(`游客${id}离开`, 'order-string')
-			writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string');
+			writeWSResponse(`游客${getIp(req, req.url)}离开`, 'order-string', null, req)
+			writeWSResponse('当前共' + wss.clients.size + '位游客', 'order-string', null, req);
 			ws.terminate()
 		}
 	})
 });
 
-function writeWSResponse(data, type="", connectionsId){
+function writeWSResponse(data, type="", connectionsId, req){
 	logger.info("writeWSResponse data", data)
+	if(req) logger.info("writeWSResponse current user ip", getIp(req, req.url))
 	let response = Object.assign({},{
 		status: 200,
 		data,
@@ -289,14 +289,25 @@ function writeWSResponse(data, type="", connectionsId){
 	}
 }
 
-logger.info("server is running at 9527")
+var address;
+var networks = os.networkInterfaces()
+Object.keys(networks).forEach(function (k) {
+	for (var kk in networks[k]) {
+		if (networks[k][kk].family === "IPv4" && networks[k][kk].address !== "127.0.0.1") {
+			address = networks[k][kk].address;
+		}
+	}
+})
+
+logger.info(`server is running at ${address}:9527`)
 
 function getIp(req, str) {
     let ip = req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '';
     if (ip.split(',').length > 0) {
         ip = ip.split(',')[0]
     }
-    logger.info(` ${str}的访问者ip`, ip);
+	logger.info(` ${str}的访问者ip`, ip);
+	return ip
 }
 function writeResponse(res, data) {
     if(res) {
@@ -346,6 +357,14 @@ function reportError(req, res, userErr) {
     }
 }
 
+process.on('unhandledRejection', (error) => {
+    logger.error('unhandledRejection', error);
+});
+
+process.on('uncaughtException', function(error) {
+    logger.error('uncaughtException', error);
+});
+
 //hot build
 {
 	if (config.useHotBuild) {
@@ -370,7 +389,7 @@ function reportError(req, res, userErr) {
 					console.debug(__dirname)
 					// process.chdir(require('path').resolve(__dirname.slice(0,-3)));
 					console.log(require('path').resolve(__dirname.slice(0, -3)))
-					let child1 = exec("yarn dev");
+					let child1 = exec("yarn build");
 					child1.stdout.on('data', function (data) {
 						logger.debug('子进程', data.toString());
 					});
