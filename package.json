@@ -6,7 +6,7 @@
 	"scripts": {
 		"build": "cross-env NODE_ENV=production webpack --progress -p",
 		"dev": "webpack --progress",
-		"start": "node index.js",
+		"start": "yarn build && node index.js",
 		"client": "webpack-dev-server --open --history-api-fallback -d --colors"
 	},
 	"dependencies": {

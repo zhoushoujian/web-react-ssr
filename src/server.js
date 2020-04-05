@@ -20,7 +20,7 @@ import { updateFileList, updateIsFromServeRender, createDuxStore } from "./store
 
 //config
 const config = {
-	useHotBuild: false
+	useHotBuild: true
 }
 
 const logger = new Logger()
