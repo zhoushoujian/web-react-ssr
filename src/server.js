@@ -57,7 +57,9 @@ app.get( "/", ( req, res ) => {
 	store.dispatch(updateIsFromServeRender(true))
     store.dispatch(updateFileList(finalList));
     const reduxState = store.getState();
-    res.writeHead( 200, { "Content-Type": "text/html" } );
+	res.writeHead( 200, { "Content-Type": "text/html" } );
+	let cssLink = ''
+	fs.readdirSync(`${process.cwd()}/dist/css`).forEach(item => { if(/.+\.css$/.test(item)) cssLink += `<link rel='stylesheet' href='./css/${item}'>` })
     res.write(`
         <!DOCTYPE html>
         <html>
@@ -68,7 +70,7 @@ app.get( "/", ( req, res ) => {
     		<meta name="keywords" content=${'keywords'} />
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 			<link rel="shortcut icon" href="./favicon.ico">
-			<link rel='stylesheet' href='./css/0.fileServer.css'>
+			${cssLink}
         </head>
         <body>
             <div id="app">`
@@ -82,14 +84,11 @@ app.get( "/", ( req, res ) => {
     );
     reactDom.pipe(res, { end: false });
     reactDom.on('end', () => {
+		let scriptStr = ""
+		fs.readdirSync(`${process.cwd()}/dist/js`).forEach(item => { if(/.+\.js$/.test(item)) scriptStr += `<script src="./js/${item}"></script>` })
 		res.write(`</div>
-                <script>
-                    window.REDUX_DATA = ${ JSON.stringify( reduxState ) }
-                </script>
-                <script src="./js/bundle.js"></script>
-                <script src="./js/fileServer.js"></script>
-				<script src="./js/manifest.js"></script>
-				<script src="./js/vendor.js"></script>
+                <script>window.REDUX_DATA = ${ JSON.stringify( reduxState ) }</script>
+                ${scriptStr}
             </body>
             </html>
         `);
