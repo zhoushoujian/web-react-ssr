@@ -1,12 +1,16 @@
 # React Server Side Rendering
-A baseline for server side rendering for your React application. This has a couple of tags that follow building full support for rendering React applications on the server.
 
-## Getting started
+原生react ssr服务端渲染demo,重在演示react服务端渲染的原理,实际项目尽量使用第三方服务端渲染框架,如nextjs
 
-Install dependencies with
-```npm i```
+nextjs demo: https://github.com/zhoushoujian/nextjs
 
-Run dev mode with
-```npm run server```
+但是,在这个demo里你可以学到:react, redux, react ssr, webpack, websocket 和 less
 
-Now open the browser and navigate to `http://localhost:9527` and you get your server rendered React app. You can inspect the page source and see that the html coming from your local server has all the nodes defined in the React app.
+## Useage
+
+```shell
+npm i
+npm run start
+```
+
+然后打开 `http://localhost:9527` , 你将看到服务端渲染的react应用

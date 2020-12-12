@@ -4,3 +4,4 @@ dist
 package-lock.json
 src/Images
 src/server.log
+server.log

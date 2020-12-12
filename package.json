@@ -56,5 +56,6 @@
 		"webpack-dev-server": "^3.5.1"
 	},
 	"author": "szhou",
-	"license": "MIT"
+	"license": "MIT",
+	"repository": "https://github.com/zhoushoujian/web-react-ssr"
 }
