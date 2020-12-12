@@ -3,6 +3,7 @@
 原生react ssr服务端渲染demo,重在演示react服务端渲染的原理,实际项目尽量使用第三方服务端渲染框架,如nextjs
 
 nextjs demo: https://github.com/zhoushoujian/nextjs
+文件服务器demo: https://github.com/zhoushoujian/file-share-sys
 
 但是,在这个demo里你可以学到:react, redux, react ssr, webpack, websocket 和 less
 

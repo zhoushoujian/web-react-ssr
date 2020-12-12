@@ -173,7 +173,7 @@ class FileServer extends React.Component {
         let { fileList, text } = this.props;
         return (
             <div className="file-server">
-                <h2 className='head'> 文件列表 </h2>
+                <h2 className='head'> 文件列表</h2>
                 <div className="upload-area">
                     <input type="file" id="fileToUpload" style={{"backgroundImage": "none"}} multiple />
                     <div className="upload">
