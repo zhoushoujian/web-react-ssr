@@ -26,6 +26,10 @@ const config = {
 const logger = new Logger()
 const connections = {}
 
+if (!fs.existsSync(path.join(__dirname, "Images"))) {
+	fs.mkdirSync(path.join(__dirname, "Images"))
+}
+
 const app = express();
 app.use(express.static(path.resolve(__dirname, "../dist")));
 
